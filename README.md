@@ -105,7 +105,7 @@ docker info --format '{{.ServerVersion}}'
 ### Клонирование проекта
 
 ```bash
-git clone <url-репозитория> databustest
+git clone https://github.com/MV-Coded/databustest databustest
 cd databustest
 ```
 
