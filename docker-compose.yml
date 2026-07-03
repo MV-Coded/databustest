@@ -1,0 +1,76 @@
+services:
+  server:
+    build: ./server
+    ports:
+      - "8000:8000"  # для отладки с хоста
+    networks:
+      - player_x_net
+      - player_o_net
+      - admin_net
+    environment:
+      - JWT_SECRET=zero-trust-game-bus-secret-2024
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8000/health"]
+      interval: 3s
+      timeout: 2s
+      retries: 10
+      start_period: 5s
+
+  # ─── Игрок X (честный) ───
+  player_x:
+    image: alpine:latest
+    command: >
+      sh -c "
+        apk add --no-cache curl jq &&
+        echo 'Player X ready' &&
+        tail -f /dev/null
+      "
+    networks:
+      - player_x_net
+    volumes:
+      - ./tests:/tests:ro
+    depends_on:
+      server:
+        condition: service_healthy
+
+  # ─── Игрок O (честный) ───
+  player_o:
+    image: alpine:latest
+    command: >
+      sh -c "
+        apk add --no-cache curl jq &&
+        echo 'Player O ready' &&
+        tail -f /dev/null
+      "
+    networks:
+      - player_o_net
+    volumes:
+      - ./tests:/tests:ro
+    depends_on:
+      server:
+        condition: service_healthy
+
+  # ─── Атакующий (Red Team, сидит в сети игрока X) ───
+  attacker:
+    image: alpine:latest
+    command: >
+      sh -c "
+        apk add --no-cache curl jq &&
+        echo 'Attacker ready' &&
+        tail -f /dev/null
+      "
+    networks:
+      - player_x_net
+    volumes:
+      - ./tests:/tests:ro
+    depends_on:
+      server:
+        condition: service_healthy
+
+networks:
+  player_x_net:
+    driver: bridge
+  player_o_net:
+    driver: bridge
+  admin_net:
+    driver: bridge
